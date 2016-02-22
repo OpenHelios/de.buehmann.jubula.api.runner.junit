@@ -1,0 +1,77 @@
+plugins {
+	id 'com.jfrog.bintray' version '1.5'
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'maven'
+
+group = 'de.buehmann.tools'
+version = '4.0.6'
+
+repositories {
+	jcenter()
+	maven {
+		url 'https://repo.eclipse.org/content/repositories/jubula-snapshots/'
+	}
+}
+
+dependencies {
+	compile 'de.buehmann.tools:de.buehmann.jubula.api.runner:4.0.6'
+	compile 'junit:junit:4.12'
+}
+
+test {
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		exceptionFormat = 'full'
+	}
+}
+
+task sourcesJar(type: Jar) {
+	from sourceSets.main.allJava
+	classifier 'sources'
+}
+
+publishing {
+	publications {
+		MyPublication(MavenPublication) {
+			from components.java
+			groupId project.group
+			artifactId project.name
+			version project.version
+			artifact sourcesJar
+		}
+	}
+}
+
+bintray {
+	user = project['bintray.user']
+	key = project['bintray.key']
+	publications = ['MyPublication']
+	// activate real run with false
+	dryRun = true
+	publish = true // automatically publish version after upload
+	pkg {
+		repo = 'maven'
+		name = project.name
+		userOrg = 'raimar'
+		licenses = ['EPL-1.0']
+		vcsUrl = 'https://github.com/OpenHelios/de.buehmann.jubula.api.runner.junit.git'
+		labels = ['junit', 'jubula', 'java', 'api', 'runner']
+		publicDownloadNumbers = true
+	}
+}
+
+// repository for local tests
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			repository(url: uri('../repo'))
+		}
+	}
+}
+
+// publish: gradle bintrayUpload
+// @see http://inthecheesefactory.com/blog/how-to-upload-library-to-jcenter-maven-central-as-dependency/en
