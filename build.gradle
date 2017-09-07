@@ -1,24 +1,35 @@
 plugins {
-	id 'com.jfrog.bintray' version '1.5'
+	id 'com.jfrog.bintray' version '1.7.3'
 }
 
 apply plugin: 'java'
-apply plugin: 'eclipse'
+// avoid wrong runtime dependencies
+apply plugin: 'java-library'
+// publishing to maven repository
 apply plugin: 'maven-publish'
 apply plugin: 'maven'
+apply plugin: 'eclipse'
 
 group = 'de.buehmann.tools'
-version = '4.0.6'
+version = '4.1.0'
+
+def Properties properties = new Properties()
+properties.load(new FileInputStream(project.file('local.properties')))
 
 repositories {
 	jcenter()
 	maven {
 		url 'https://repo.eclipse.org/content/repositories/jubula-snapshots/'
 	}
+/*
+	maven {
+		url file('../repo')
+	}
+*/
 }
 
 dependencies {
-	compile 'de.buehmann.tools:de.buehmann.jubula.api.runner:4.0.6'
+	compile 'de.buehmann.tools:de.buehmann.jubula.api.runner:4.1.0'
 	compile 'junit:junit:4.12'
 }
 
@@ -34,6 +45,33 @@ task sourcesJar(type: Jar) {
 	classifier 'sources'
 }
 
+bintray {
+	user = properties.getProperty('bintray.user')
+	key = properties.getProperty('bintray.key')
+	publications = ['MyPublication']
+	// activate real run with false
+	dryRun = false
+	publish = true // automatically publish version after upload
+	pkg {
+		repo = 'maven'
+		name = project.name
+		userOrg = 'raimar'
+		licenses = ['EPL-1.0']
+		websiteUrl = project.getProperty('websiteUrl')
+		issueTrackerUrl = project.getProperty('websiteUrl') + '/issues'
+		vcsUrl = project.getProperty('websiteUrl') + '.git'
+		labels = ['junit', 'jubula', 'java', 'api', 'runner']
+		publicDownloadNumbers = true
+		version {
+			name = project.version
+			desc = 'Jubula Java API runner ' + project.version
+			released  = new Date()
+			// vcsTag = project.version
+			// attributes = ['library': 'de.buehmann.tools:de.buehmann.jubula.api.runnner']
+		}
+	}
+}
+
 publishing {
 	publications {
 		MyPublication(MavenPublication) {
@@ -43,24 +81,6 @@ publishing {
 			version project.version
 			artifact sourcesJar
 		}
-	}
-}
-
-bintray {
-	user = project['bintray.user']
-	key = project['bintray.key']
-	publications = ['MyPublication']
-	// activate real run with false
-	dryRun = true
-	publish = true // automatically publish version after upload
-	pkg {
-		repo = 'maven'
-		name = project.name
-		userOrg = 'raimar'
-		licenses = ['EPL-1.0']
-		vcsUrl = 'https://github.com/OpenHelios/de.buehmann.jubula.api.runner.junit.git'
-		labels = ['junit', 'jubula', 'java', 'api', 'runner']
-		publicDownloadNumbers = true
 	}
 }
 
@@ -74,4 +94,4 @@ uploadArchives {
 }
 
 // publish: gradle bintrayUpload
-// @see http://inthecheesefactory.com/blog/how-to-upload-library-to-jcenter-maven-central-as-dependency/en
+// @see https://github.com/bintray/gradle-bintray-plugin#readme
